@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy — Spendly{% endblock %}
+
+{% block content %}
+
+<section class="legal">
+    <div class="legal-layout">
+        <aside class="legal-toc">
+            <span class="legal-toc-label">On this page</span>
+            <nav>
+                <a href="#data-we-collect" class="legal-toc-link">1. Data We Collect</a>
+                <a href="#how-we-use-data" class="legal-toc-link">2. How We Use Your Data</a>
+                <a href="#data-storage" class="legal-toc-link">3. Data Storage</a>
+                <a href="#third-party-services" class="legal-toc-link">4. Third Party Services</a>
+                <a href="#contact-us" class="legal-toc-link">5. Contact Us</a>
+            </nav>
+        </aside>
+
+        <div class="legal-content">
+            <h1 class="legal-title">Privacy Policy</h1>
+            <p class="legal-updated">Last updated: July 2026</p>
+
+            <h2 id="data-we-collect">1. Data We Collect</h2>
+            <p>
+                When you use Spendly, we collect the information you provide directly, such as your
+                name, email address, and account credentials, along with the expense data you choose
+                to log — amounts, categories, dates, and descriptions. We may also collect basic
+                usage information, such as login timestamps, to help us maintain and improve the
+                Service.
+            </p>
+
+            <h2 id="how-we-use-data">2. How We Use Your Data</h2>
+            <p>
+                We use the information we collect to operate and improve Spendly — this includes
+                displaying your expense history, generating spending summaries, authenticating your
+                account, and providing customer support. We do not use your financial data for
+                advertising, and we do not sell your personal information to third parties.
+            </p>
+
+            <h2 id="data-storage">3. Data Storage</h2>
+            <p>
+                Your account and expense data are stored securely and retained for as long as your
+                account remains active. You may request deletion of your account and all associated
+                data at any time, after which your information will be permanently removed from our
+                systems within a reasonable timeframe.
+            </p>
+
+            <h2 id="third-party-services">4. Third Party Services</h2>
+            <p>
+                Spendly may rely on trusted third-party services for functions such as hosting,
+                analytics, or email delivery. These providers only receive the minimum data necessary
+                to perform their function and are not permitted to use it for any other purpose.
+                Spendly does not share your expense data with advertisers or data brokers.
+            </p>
+
+            <h2 id="contact-us">5. Contact Us</h2>
+            <p>
+                If you have questions about this Privacy Policy or how your data is handled, you can
+                reach out to us through the contact details provided within your account settings.
+                We're happy to help clarify anything about how Spendly protects your information.
+            </p>
+        </div>
+    </div>
+
+    <button type="button" class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        const links = document.querySelectorAll('.legal-toc-link');
+        const sections = Array.from(links).map(link => document.querySelector(link.getAttribute('href')));
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const link = document.querySelector(`.legal-toc-link[href="#${entry.target.id}"]`);
+                if (entry.isIntersecting) {
+                    links.forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                }
+            });
+        }, { rootMargin: '-20% 0px -70% 0px' });
+
+        sections.forEach(section => { if (section) observer.observe(section); });
+
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            backToTop.classList.toggle('visible', window.scrollY > 400);
+        });
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    })();
+</script>
+{% endblock %}
