@@ -8,6 +8,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "expense_tracker.db")
 
 
+class DuplicateEmailError(Exception):
+    """Raised by create_user() when the email is already registered."""
+
+
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -40,6 +44,27 @@ def init_db():
             )
         """)
         conn.commit()
+    finally:
+        conn.close()
+
+
+def create_user(name, email, password):
+    """Create a new user with a securely hashed password.
+
+    Returns the new user's id. Raises DuplicateEmailError if the
+    email is already registered.
+    """
+    password_hash = generate_password_hash(password)
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+            (name, email, password_hash),
+        )
+        conn.commit()
+        return cursor.lastrowid
+    except sqlite3.IntegrityError:
+        raise DuplicateEmailError(f"email '{email}' is already registered") from None
     finally:
         conn.close()
 
