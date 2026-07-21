@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 
 from flask import Flask, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash
@@ -6,8 +7,12 @@ from werkzeug.security import check_password_hash
 from database import (
     DuplicateEmailError,
     create_user,
+    get_category_breakdown,
     get_db,
+    get_expense_summary,
+    get_recent_expenses,
     get_user_by_email,
+    get_user_by_id,
     init_db,
     seed_db,
 )
@@ -16,6 +21,13 @@ app = Flask(__name__)
 app.secret_key = "dev-secret-key"
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+@app.context_processor
+def inject_current_user():
+    if session.get("user_id"):
+        return {"current_user": get_user_by_id(session["user_id"])}
+    return {"current_user": None}
 
 
 # ------------------------------------------------------------------ #
@@ -54,7 +66,7 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if session.get("user_id"):
-        return redirect(url_for("landing"))
+        return redirect(url_for("profile"))
 
     if request.method == "GET":
         return render_template("login.html")
@@ -67,7 +79,7 @@ def login():
         return render_template("login.html", error="Invalid email or password.")
 
     session["user_id"] = user["id"]
-    return redirect(url_for("landing"))
+    return redirect(url_for("profile"))
 
 
 @app.route("/terms")
@@ -92,7 +104,38 @@ def logout():
 
 @app.route("/profile")
 def profile():
-    return "Profile page — coming in Step 4"
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
+
+    user = get_user_by_id(session["user_id"])
+    summary = get_expense_summary(user["id"])
+    recent_expenses = get_recent_expenses(user["id"])
+
+    breakdown = get_category_breakdown(user["id"])
+    max_total = breakdown[0]["total"] if breakdown else 0
+    categories = [
+        {
+            "name": row["category"],
+            "total": row["total"],
+            "pct": round(row["total"] / max_total * 100, 1) if max_total else 0,
+        }
+        for row in breakdown
+    ]
+    top_category = categories[0]["name"] if categories else None
+
+    member_since = datetime.strptime(
+        user["created_at"], "%Y-%m-%d %H:%M:%S"
+    ).strftime("%B %Y")
+
+    return render_template(
+        "profile.html",
+        user=user,
+        summary=summary,
+        recent_expenses=recent_expenses,
+        categories=categories,
+        top_category=top_category,
+        member_since=member_since,
+    )
 
 
 @app.route("/expenses/add")
