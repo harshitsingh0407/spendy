@@ -69,6 +69,17 @@ def create_user(name, email, password):
         conn.close()
 
 
+def get_user_by_email(email):
+    """Look up a user by email. Returns a Row (or None if not found)."""
+    conn = get_db()
+    try:
+        return conn.execute(
+            "SELECT * FROM users WHERE email = ?", (email,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
 DEMO_USER = {
     "name": "Demo User",
     "email": "demo@spendly.com",
