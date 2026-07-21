@@ -4,6 +4,10 @@ from database.db import (
     seed_db,
     create_user,
     get_user_by_email,
+    get_user_by_id,
+    get_expense_summary,
+    get_category_breakdown,
+    get_recent_expenses,
     DuplicateEmailError,
 )
 
@@ -13,5 +17,9 @@ __all__ = [
     "seed_db",
     "create_user",
     "get_user_by_email",
+    "get_user_by_id",
+    "get_expense_summary",
+    "get_category_breakdown",
+    "get_recent_expenses",
     "DuplicateEmailError",
 ]

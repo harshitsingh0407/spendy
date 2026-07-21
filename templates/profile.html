@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Your profile — Spendly{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+
+{% set cat_slugs = {
+    'Food': 'food',
+    'Transport': 'transport',
+    'Bills': 'bills',
+    'Health': 'health',
+    'Entertainment': 'entertainment',
+    'Shopping': 'shopping',
+    'Other': 'other',
+} %}
+
+<section class="profile-section">
+    <div class="profile-container">
+
+        <div class="profile-header profile-card">
+            <div class="profile-avatar">{{ user["name"][0] | upper }}</div>
+            <div class="profile-header-text">
+                <h1 class="profile-name">{{ user["name"] }}</h1>
+                <p class="profile-email">{{ user["email"] }}</p>
+                <p class="profile-since">Member since {{ member_since }}</p>
+            </div>
+        </div>
+
+        <div class="profile-stats">
+            <div class="profile-stat-card">
+                <span class="profile-stat-label">Total spent</span>
+                <span class="profile-stat-value">₹{{ "%.2f" | format(summary["total"]) }}</span>
+            </div>
+            <div class="profile-stat-card">
+                <span class="profile-stat-label">Transactions</span>
+                <span class="profile-stat-value">{{ summary["count"] }}</span>
+            </div>
+            <div class="profile-stat-card">
+                <span class="profile-stat-label">Top category</span>
+                <span class="profile-stat-value{% if not top_category %} profile-stat-empty{% endif %}">{{ top_category or "—" }}</span>
+            </div>
+        </div>
+
+        <div class="profile-columns">
+
+            <div class="profile-card profile-tx-card">
+                <h2 class="profile-card-title">Recent transactions</h2>
+                {% if recent_expenses %}
+                <table class="profile-tx-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th class="profile-tx-amount">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tx in recent_expenses %}
+                        <tr>
+                            <td>{{ tx["date"] }}</td>
+                            <td>{{ tx["description"] or "—" }}</td>
+                            <td>
+                                <span class="cat-pill cat-{{ cat_slugs.get(tx['category'], 'other') }}">{{ tx["category"] }}</span>
+                            </td>
+                            <td class="profile-tx-amount">₹{{ "%.2f" | format(tx["amount"]) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="profile-empty-state">No expenses logged yet.</p>
+                {% endif %}
+            </div>
+
+            <div class="profile-card profile-cat-card">
+                <h2 class="profile-card-title">By category</h2>
+                {% if categories %}
+                {% for cat in categories %}
+                <div class="profile-cat-row">
+                    <div class="profile-cat-top">
+                        <span class="profile-cat-name">{{ cat.name }}</span>
+                        <span class="profile-cat-amount">₹{{ "%.2f" | format(cat.total) }}</span>
+                    </div>
+                    <div class="profile-cat-track">
+                        <div class="cat-bar cat-{{ cat_slugs.get(cat.name, 'other') }}" style="width: {{ cat.pct }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="profile-empty-state">No expenses logged yet.</p>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

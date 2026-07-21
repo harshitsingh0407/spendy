@@ -28,6 +28,7 @@ def init_db():
                 name TEXT NOT NULL,
                 email TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
+                monthly_budget REAL NOT NULL DEFAULT 20000,
                 created_at TEXT DEFAULT (datetime('now'))
             )
         """)
@@ -43,6 +44,15 @@ def init_db():
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )
         """)
+
+        existing_columns = {
+            row["name"] for row in conn.execute("PRAGMA table_info(users)")
+        }
+        if "monthly_budget" not in existing_columns:
+            conn.execute(
+                "ALTER TABLE users ADD COLUMN monthly_budget REAL NOT NULL DEFAULT 20000"
+            )
+
         conn.commit()
     finally:
         conn.close()
@@ -80,6 +90,57 @@ def get_user_by_email(email):
         conn.close()
 
 
+def get_user_by_id(user_id):
+    """Look up a user by id. Returns a Row (or None if not found)."""
+    conn = get_db()
+    try:
+        return conn.execute(
+            "SELECT * FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def get_expense_summary(user_id):
+    """Return {count, total} all-time spend stats for a user."""
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT COUNT(*) AS count, COALESCE(SUM(amount), 0) AS total "
+            "FROM expenses WHERE user_id = ?",
+            (user_id,),
+        ).fetchone()
+        return {"count": row["count"], "total": row["total"]}
+    finally:
+        conn.close()
+
+
+def get_category_breakdown(user_id):
+    """Return each category's all-time total for a user, highest first."""
+    conn = get_db()
+    try:
+        return conn.execute(
+            "SELECT category, SUM(amount) AS total FROM expenses "
+            "WHERE user_id = ? GROUP BY category ORDER BY total DESC",
+            (user_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def get_recent_expenses(user_id, limit=10):
+    """Return a user's most recent expenses, newest first."""
+    conn = get_db()
+    try:
+        return conn.execute(
+            "SELECT date, description, category, amount FROM expenses "
+            "WHERE user_id = ? ORDER BY date DESC, id DESC LIMIT ?",
+            (user_id, limit),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
 DEMO_USER = {
     "name": "Demo User",
     "email": "demo@spendly.com",
@@ -88,16 +149,23 @@ DEMO_USER = {
 
 # (category, amount, description, day_of_month)
 # Days kept <= 24 so every value is valid in any month, spread across the
-# current month. Food appears twice to reach 8 rows across 7 categories.
+# current month. Two entries per category (14 rows) so the profile page's
+# stats and category breakdown look populated out of the box.
 SAMPLE_EXPENSES = [
-    ("Food", 42.50, "Groceries", 2),
-    ("Transport", 18.00, "Bus pass", 4),
-    ("Bills", 120.00, "Electricity bill", 5),
-    ("Health", 60.00, "Pharmacy", 8),
-    ("Entertainment", 15.99, "Movie ticket", 11),
-    ("Shopping", 89.99, "New shoes", 14),
-    ("Other", 25.00, "Miscellaneous", 18),
-    ("Food", 22.30, "Dinner out", 21),
+    ("Food", 450.00, "Groceries", 2),
+    ("Food", 320.50, "Dinner out", 21),
+    ("Food", 180.00, "Coffee & snacks", 15),
+    ("Transport", 550.00, "Fuel", 4),
+    ("Transport", 120.00, "Metro card recharge", 11),
+    ("Bills", 2200.00, "Electricity bill", 5),
+    ("Bills", 899.00, "Internet bill", 9),
+    ("Health", 750.00, "Pharmacy", 8),
+    ("Health", 1200.00, "Doctor visit", 18),
+    ("Entertainment", 649.00, "Netflix subscription", 6),
+    ("Entertainment", 899.00, "Movie night", 14),
+    ("Shopping", 3200.00, "New shoes & clothes", 12),
+    ("Shopping", 1499.00, "Headphones", 20),
+    ("Other", 450.00, "Miscellaneous", 24),
 ]
 
 
