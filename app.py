@@ -1,5 +1,4 @@
 import re
-from datetime import datetime
 
 from flask import Flask, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash
@@ -7,14 +6,17 @@ from werkzeug.security import check_password_hash
 from database import (
     DuplicateEmailError,
     create_user,
-    get_category_breakdown,
     get_db,
-    get_expense_summary,
-    get_recent_expenses,
     get_user_by_email,
     get_user_by_id,
     init_db,
     seed_db,
+)
+from database.queries import (
+    get_category_breakdown,
+    get_recent_transactions,
+    get_summary_stats,
+    get_user_by_id as get_profile_user,
 )
 
 app = Flask(__name__)
@@ -107,25 +109,11 @@ def profile():
     if not session.get("user_id"):
         return redirect(url_for("login"))
 
-    user = get_user_by_id(session["user_id"])
-    summary = get_expense_summary(user["id"])
-    recent_expenses = get_recent_expenses(user["id"])
-
-    breakdown = get_category_breakdown(user["id"])
-    max_total = breakdown[0]["total"] if breakdown else 0
-    categories = [
-        {
-            "name": row["category"],
-            "total": row["total"],
-            "pct": round(row["total"] / max_total * 100, 1) if max_total else 0,
-        }
-        for row in breakdown
-    ]
-    top_category = categories[0]["name"] if categories else None
-
-    member_since = datetime.strptime(
-        user["created_at"], "%Y-%m-%d %H:%M:%S"
-    ).strftime("%B %Y")
+    user_id = session["user_id"]
+    user = get_profile_user(user_id)
+    summary = get_summary_stats(user_id)
+    recent_expenses = get_recent_transactions(user_id)
+    categories = get_category_breakdown(user_id)
 
     return render_template(
         "profile.html",
@@ -133,8 +121,8 @@ def profile():
         summary=summary,
         recent_expenses=recent_expenses,
         categories=categories,
-        top_category=top_category,
-        member_since=member_since,
+        top_category=summary["top_category"] if summary["top_category"] != "—" else None,
+        member_since=user["member_since"],
     )
 
 
