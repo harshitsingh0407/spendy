@@ -33,11 +33,11 @@
         <div class="profile-stats">
             <div class="profile-stat-card">
                 <span class="profile-stat-label">Total spent</span>
-                <span class="profile-stat-value">₹{{ "%.2f" | format(summary["total"]) }}</span>
+                <span class="profile-stat-value">₹{{ "%.2f" | format(summary["total_spent"]) }}</span>
             </div>
             <div class="profile-stat-card">
                 <span class="profile-stat-label">Transactions</span>
-                <span class="profile-stat-value">{{ summary["count"] }}</span>
+                <span class="profile-stat-value">{{ summary["transaction_count"] }}</span>
             </div>
             <div class="profile-stat-card">
                 <span class="profile-stat-label">Top category</span>
@@ -84,7 +84,7 @@
                 <div class="profile-cat-row">
                     <div class="profile-cat-top">
                         <span class="profile-cat-name">{{ cat.name }}</span>
-                        <span class="profile-cat-amount">₹{{ "%.2f" | format(cat.total) }}</span>
+                        <span class="profile-cat-amount">₹{{ "%.2f" | format(cat.amount) }}</span>
                     </div>
                     <div class="profile-cat-track">
                         <div class="cat-bar cat-{{ cat_slugs.get(cat.name, 'other') }}" style="width: {{ cat.pct }}%"></div>
